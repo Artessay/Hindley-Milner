@@ -66,8 +66,8 @@ module Infer_no_let = struct
   let (initial_ctx : ty ctx) =
     let ctx = empty in
     let ctx = extend ctx "( + )" @@ ?~"int -> int -> int" in
-    let ctx = extend ctx "( * )" @@ ?~"int" (* Todo *) in
-    let ctx = extend ctx "( < )" @@ ?~"int" (* Todo *) in
+    let ctx = extend ctx "( * )" @@ ?~"int -> int -> int" in
+    let ctx = extend ctx "( < )" @@ ?~"int -> int -> bool" in
     ctx
 
   (* 回顾我们的目标语言：
