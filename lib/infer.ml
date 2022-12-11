@@ -102,14 +102,14 @@ module Infer_no_let = struct
        --------------------
         ctx |- b: bool -| {}
     *)
-    | Int _ -> raise Todo
-    | Bool _ -> raise Todo
+    | Int _ -> (TInt , [])
+    | Bool _ -> (TBool , [])
     (* 推导一个名字的类型只需要我们在环境 ctx 中进行查找即可。没有要生成的约束，也没引入新的未知类型
             (nothing)
        --------------------
         ctx |- n: lookup ctx n -| {}
     *)
-    | Name _ -> raise Todo
+    | Name n -> ((lookup ctx n) , [])
     (* 接下来的规则相对复杂一点，我们会加入新的约束
         ctx |- e1 : t1 -| C1
         ctx |- e2 : t2 -| C2
@@ -135,7 +135,11 @@ module Infer_no_let = struct
 
          你可以通过 next_fresh_tvar 来生成新的类型变量
     *)
-    | Lam (_, _) -> raise Todo
+    | Lam (x, e) -> 
+        let t1 = next_fresh_tvar fresh in
+        let ctx = extend ctx x t1 in
+        let t2, c2 = collect fresh ctx e in
+        (TLam(t1, t2), c2)
     (* 应用的规则如下。
          可能有人会产生疑惑，
          为什么我们不能直接将 t1 解开成为形如 ta -> tb 的 TLam 类型，
@@ -152,7 +156,11 @@ module Infer_no_let = struct
 
          你可以通过 next_fresh_tvar 来生成新的类型变量
     *)
-    | App (_, _) -> raise Todo
+    | App (e1, e2) -> 
+        let t1, c1 = collect fresh ctx e1 in
+        let t2, c2 = collect fresh ctx e2 in
+        let t3 = next_fresh_tvar fresh in
+        (t3, c1 @ c2 @ [t1 =~ TLam(t2, t3)])
     (* 暂时不需要实现这一部分
     *)
     | Let _ -> raise Unimplemented
