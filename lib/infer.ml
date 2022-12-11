@@ -240,7 +240,10 @@ module Infer_no_let = struct
 
           + t2 是任意一个类型变量 'x, 且 t2 不在 t1 中出现，则生成替换
             S = 'x => t1，并将替换应用到 C' 上。结果是 S; unify (C' S) *)
-        (* |  *)
+        | (TVar x, TVar y) -> (
+            raise Todo
+        (* let s = subst  *)
+        )
         (* t1 = i1 -> o1 且 t2 = i2 -> o2，则结果是 unify(i1 =~ i2, o1 =~ o2, C') *)
         | (TLam(i1, o1), TLam(i2, o2))  ->
           unify ([(i1 =~ i2); (o1 =~ o2)] @ _rest)
@@ -352,8 +355,8 @@ module Infer = struct
   let rec collect fresh ctx expr : ty * constr list =
     match expr with
     (* 照旧 *)
-    | Int _ -> raise Todo
-    | Bool _ -> raise Todo
+    | Int _ -> (TInt , [])
+    | Bool _ -> (TBool , [])
     (* 请依据上文中提到的新的推导关系修改这里的代码 *)
     | Name x -> raise Todo
     (* 照旧 *)
@@ -368,7 +371,11 @@ module Infer = struct
     *)
     | Lam (x, e) -> raise Todo
     (* 照旧 *)
-    | App (e1, e2) -> raise Todo
+    | App (e1, e2) -> 
+        let t1, c1 = collect fresh ctx e1 in
+        let t2, c2 = collect fresh ctx e2 in
+        let t3 = next_fresh_tvar fresh in
+        (t3, c1 @ c2 @ [t1 =~ TLam(t2, t3)])
     (* 前面提到，在这个例子
         let id = \x. x in
         let a = id 0 in
