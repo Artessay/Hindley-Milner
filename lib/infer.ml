@@ -461,7 +461,11 @@ module Infer = struct
       其中 'a1 ... 'an 出现在 u 中但没有出现在 ktx 中
   *)
   and generalize ctx (x : string) (t : ty) (c : constr list) : tyscheme ctx =
+    let sts = unify c in
+    let u = subst_all sts t in
+    let ktx = subst_all_in_ctx sts ctx in
     raise Todo
+    (* List.map ~f:(fun (x, t) -> (x, Ts ([], t))) (extend ktx x u) *)
 
   (* 这个函数将一系列替换作用到 ctx 上，你可能需要在 generalize 中使用它 *)
   (* 对于每个类型方案，我们不需要考虑类型参数列表的替换，
