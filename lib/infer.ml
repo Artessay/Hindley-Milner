@@ -241,7 +241,7 @@ module Infer_no_let = struct
         (* + t1 是任意一个类型变量 'x, 且 t1 不在 t2 中出现，则生成替换
             S = 'x => t2，并将替换应用到 C' 上。结果是 S; unify (C' S) *)
         | (x, TVar y) -> (
-          if ((contains x y) == false)
+          if (phys_equal (contains x y) false)
             then 
               ( [y => x] @ ( unify (subst_all_in_constr (y => x) _rest) ) )
             else
@@ -250,7 +250,7 @@ module Infer_no_let = struct
         (* + t2 是任意一个类型变量 'x, 且 t2 不在 t1 中出现，则生成替换
             S = 'x => t1，并将替换应用到 C' 上。结果是 S; unify (C' S) *)
         | (TVar x, y) -> (
-          if ((contains y x) == false)
+          if (phys_equal (contains y x) false)
             then 
               ( [x => y] @ ( unify (subst_all_in_constr (x => y) _rest) ) )
             else
@@ -377,8 +377,10 @@ module Infer = struct
     | Int _ -> (TInt , [])
     | Bool _ -> (TBool , [])
     (* 请依据上文中提到的新的推导关系修改这里的代码 *)
-    | Name x -> 
-      ((lookup ctx x) , []) (* @todo *)
+    | Name x -> (
+      let Ts(xs, t) = lookup ctx x in
+      (t, [])
+    )
     (* 照旧 *)
     | If (e1, e2, e3) ->
         let t1, c1 = collect fresh ctx e1 in
@@ -389,7 +391,11 @@ module Infer = struct
        从类型变成了类型方案。
        对于 x，我们需要加入列表为空的 type scheme
     *)
-    | Lam (x, e) -> raise Todo
+    | Lam (x, e) -> 
+      let t1 = next_fresh_tvar fresh in
+      let ctx = (extend ctx x (Ts([], t1))) in
+      let t2, c2 = collect fresh ctx e in
+      (TLam(t1, t2), c2)
     (* 照旧 *)
     | App (e1, e2) -> 
         let t1, c1 = collect fresh ctx e1 in
@@ -418,7 +424,10 @@ module Infer = struct
 
         请在这里将代码补充完全，然后转到之后 generalize 的实现上
     *)
-    | Let (x, e1, e2) -> raise Todo
+    | Let (x, e1, e2) -> 
+        let t1, c1 = collect fresh ctx e1 in
+        let t2, c2 = collect fresh (generalize ctx x t1 c1) e2 in
+        (t2, c2)
 
   (* 考虑
         ctx |- e1: t1 -| C1
