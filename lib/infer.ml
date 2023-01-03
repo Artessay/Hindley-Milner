@@ -229,6 +229,9 @@ module Infer_no_let = struct
           + 否则代表求解失败，这个时候请抛出一个 UnificationFailed 异常并带上产生异常的约束
     *)
     | (Constr (_t1, _t2) as _c) :: _rest -> (
+        (* let _ =
+          print_constr _c 
+        in *)
         match (_t1, _t2) with
         (* t1, t2 都是相同简单类型，比如 int, int，则结果就是 unify C' *)
         | (TBool, TBool)  -> unify _rest
@@ -236,13 +239,22 @@ module Infer_no_let = struct
         (* t1, t2 都是相同的类型变量，比如 'x, 'x，则结果就是 unify C' *)
         | (TVar x, TVar y) when String.equal x y -> unify _rest
         (* + t1 是任意一个类型变量 'x, 且 t1 不在 t2 中出现，则生成替换
-            S = 'x => t2，并将替换应用到 C' 上。结果是 S; unify (C' S)
-
-          + t2 是任意一个类型变量 'x, 且 t2 不在 t1 中出现，则生成替换
+            S = 'x => t2，并将替换应用到 C' 上。结果是 S; unify (C' S) *)
+        | (x, TVar y) -> (
+          if ((contains x y) == false)
+            then 
+              ( [y => x] @ ( unify (subst_all_in_constr (y => x) _rest) ) )
+            else
+              raise (UnificationFailed _c)
+        )
+        (* + t2 是任意一个类型变量 'x, 且 t2 不在 t1 中出现，则生成替换
             S = 'x => t1，并将替换应用到 C' 上。结果是 S; unify (C' S) *)
-        | (TVar x, TVar y) -> (
-            raise Todo
-        (* let s = subst  *)
+        | (TVar x, y) -> (
+            if ((contains y x) == false)
+              then 
+                ( [x => y] @ ( unify (subst_all_in_constr (x => y) _rest) ) )
+              else
+                raise (UnificationFailed _c)
         )
         (* t1 = i1 -> o1 且 t2 = i2 -> o2，则结果是 unify(i1 =~ i2, o1 =~ o2, C') *)
         | (TLam(i1, o1), TLam(i2, o2))  ->
