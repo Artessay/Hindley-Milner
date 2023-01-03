@@ -250,16 +250,15 @@ module Infer_no_let = struct
         (* + t2 是任意一个类型变量 'x, 且 t2 不在 t1 中出现，则生成替换
             S = 'x => t1，并将替换应用到 C' 上。结果是 S; unify (C' S) *)
         | (TVar x, y) -> (
-            if ((contains y x) == false)
-              then 
-                ( [x => y] @ ( unify (subst_all_in_constr (x => y) _rest) ) )
-              else
-                raise (UnificationFailed _c)
+          if ((contains y x) == false)
+            then 
+              ( [x => y] @ ( unify (subst_all_in_constr (x => y) _rest) ) )
+            else
+              raise (UnificationFailed _c)
         )
         (* t1 = i1 -> o1 且 t2 = i2 -> o2，则结果是 unify(i1 =~ i2, o1 =~ o2, C') *)
         | (TLam(i1, o1), TLam(i2, o2))  ->
           unify ([(i1 =~ i2); (o1 =~ o2)] @ _rest)
-            (* unify (([i1 =~ i2] @ [o1 =~ o2]) @ _rest) *)
         | _ -> raise (UnificationFailed _c)
     )
 
@@ -362,7 +361,15 @@ module Infer = struct
      你需要检查 Ts (xs, t) 中的 xs，只有名称位于 xs 中的的 tvar 才是需要被替换的！
      举例而言，'a. 'a -> 'b 在实例化时，我们应该将 'a 替换成崭新的类型变量，而不替换 'b
   *)
-  let instantiate fresh (Ts (xs, t)) : ty = raise Todo
+  let rec instantiate fresh (Ts (xs, t)) : ty = 
+    match xs with
+    | []  -> t
+    | _a :: _rest -> (
+      let nt = next_fresh_tvar fresh in
+      let scheme = Ts(_rest, (subst_all [_a => nt] t)) in
+      (instantiate fresh scheme)
+      (* 当然，这里也可以直接使用 List.Map 来实现，而且更加高效 *)
+    )
 
   let rec collect fresh ctx expr : ty * constr list =
     match expr with
@@ -370,7 +377,8 @@ module Infer = struct
     | Int _ -> (TInt , [])
     | Bool _ -> (TBool , [])
     (* 请依据上文中提到的新的推导关系修改这里的代码 *)
-    | Name x -> raise Todo
+    | Name x -> 
+      ((lookup ctx x) , []) (* @todo *)
     (* 照旧 *)
     | If (e1, e2, e3) ->
         let t1, c1 = collect fresh ctx e1 in

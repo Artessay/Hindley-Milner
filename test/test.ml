@@ -27,8 +27,12 @@ let infer_with_let expr =
 let () =
   infer_without_let ?@{| 9 |};
   infer_without_let ?@{| 9 + 8 |};
-  (* infer_without_let ?@{| \x. x + 8 |}; *)
+  infer_without_let ?@{| \x. x + 8 |};
+  (* infer_without_let ?@{| 9 + false |}; *)
 
+  infer_with_let ?@{| 9 |};
+  infer_with_let ?@{| 9 + 8 |};
+  infer_with_let ?@{| \x. x + 8 |};
   (* infer_with_let ?@{|let s = \x. \y. \z. (x z) (y z) in s|};
   infer_with_let ?@{|let id = \x. x in let a = id 0 in id true|};
   infer_with_let ?@{|let double = \f. \x. f (f x) in double|};
