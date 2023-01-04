@@ -37,9 +37,9 @@ let () =
   infer_with_let ?@{|let s = \x. \y. \z. (x z) (y z) in s|};
   infer_with_let ?@{|let id = \x. x in let a = id 0 in id true|};
   infer_with_let ?@{|let double = \f. \x. f (f x) in double|};
-  (* infer_with_let
+  infer_with_let
     ?@{|let b = true in
 let f0 = \x. x + 1 in
 let f = \x. if b then f0 else \y. x y in
 let f = \x. if b then f else \y. x y in
-f |} *)
+f |}

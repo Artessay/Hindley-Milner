@@ -378,7 +378,8 @@ module Infer = struct
     | Bool _ -> (TBool , [])
     (* 请依据上文中提到的新的推导关系修改这里的代码 *)
     | Name x -> (
-      let Ts(xs, t) = lookup ctx x in
+      (* let Ts(xs, t) = lookup ctx x in *)
+      let t = instantiate fresh (lookup ctx x) in
       (t, [])
     )
     (* 照旧 *)
