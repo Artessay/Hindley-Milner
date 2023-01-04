@@ -461,34 +461,33 @@ module Infer = struct
       其中 'a1 ... 'an 出现在 u 中但没有出现在 ktx 中
   *)
   and generalize ctx (x : string) (t : ty) (c : constr list) : tyscheme ctx =
-  (* (extend ctx x (Ts([], t))) *)
     let sts = unify c in
     let u = subst_all sts t in
     let ktx = subst_all_in_ctx sts ctx in
-    (extend ctx x (Ts([], t)))
-    (* let rec kter kktx uu = 
+    let rec kter kktx uu = 
       match kktx with
       | []  -> true
-      | Ts(xs, tt) :: rktx -> 
+      | (_, Ts(xs, tt)) :: rktx -> 
           if (contains tt uu)
             then false
             else (kter rktx uu)
     in
-    let rec aux uu = 
+    let rec aux ktx' uu = (
+      (* let _ = print_ty uu in *)
       match uu with
-      | TBool -> ktx
-      | TInt  -> ktx
+      | TBool -> []
+      | TInt  -> []
       | TVar s -> 
-        if (kter ktx s) 
+        if (kter ktx' s) 
           then 
-            (extend ktx x (Ts([], uu)))
-            (* ((x, (Ts([], uu))) :: ktx)  *)
-          else (ktx)
-      | TLam(t1, t2)  -> (aux t1) @ (aux t2)
+            [s]
+          else 
+            []
+      | TLam(t1, t2)  -> 
+        (aux ktx' t1) @ (aux ktx' t2)
+    )
     in
-    aux u *)
-    
-    (* List.map ~f:(fun (x, t) -> (x, Ts ([], t))) (extend ktx x (u)) *)
+    (extend ktx x (Ts((aux ktx u), u)))
 
   (* 这个函数将一系列替换作用到 ctx 上，你可能需要在 generalize 中使用它 *)
   (* 对于每个类型方案，我们不需要考虑类型参数列表的替换，
@@ -504,3 +503,33 @@ module Infer = struct
     let sts = unify cs in
     subst_all sts t |> rename
 end
+
+
+(* and generalize ctx (x : string) (t : ty) (c : constr list) : tyscheme ctx =
+    let sts = unify c in
+    let u = subst_all sts t in
+    let ktx = subst_all_in_ctx sts ctx in
+    let rec kter kktx uu = 
+      match kktx with
+      | []  -> true
+      | (_, Ts(xs, tt)) :: rktx -> 
+          if (contains tt uu)
+            then false
+            else (kter rktx uu)
+    in
+    let rec aux ktx' uu = (
+      let _ = print_ty uu in
+      match uu with
+      | TBool -> ktx'
+      | TInt  -> ktx'
+      | TVar s -> 
+        if (kter ktx' s) 
+          then 
+            (extend ktx' x (Ts([], uu)))
+          else (ktx')
+      | TLam(t1, t2)  -> 
+          (extend ktx' x (Ts([], TLam())))
+        (* (aux ktx' t1) @ (aux ktx' t2) *)
+    )
+    in
+    aux ktx u *)
